@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Objectif Ajax">
+<meta name="theme-color" content="#101a14">
+<title>Programme Ajax</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --pitch:#101a14; --pitch2:#16241b; --chalk:#f0ece1; --chalk-dim:#b9c2b7;
+  --amber:#d98f2b; --line:#2a3a2e; --run:#3f7a52; --gym:#c46b3e; --foot:#3f7a9e; --done:#4a8f5c;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+  box-sizing:border-box;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px);}
+*{box-sizing:border-box;}
+body{margin:0;background:var(--pitch);color:var(--chalk);font-family:'Inter',sans-serif;min-height:100%;}
+h1,h2,.tab,.big{font-family:'Oswald',sans-serif;}
+header{padding:22px 18px 10px;position:sticky;top:0;background:var(--pitch);z-index:5;padding-top:calc(22px + env(safe-area-inset-top,0px));border-bottom:1px solid var(--line);}
+header h1{margin:0 0 2px;font-size:1.5rem;font-weight:700;letter-spacing:.3px;}
+header p{margin:0;color:var(--chalk-dim);font-size:.85rem;}
+.tabs{display:flex;gap:6px;overflow-x:auto;padding:12px 18px 0;-webkit-overflow-scrolling:touch;}
+.tab{flex:0 0 auto;padding:8px 14px;border-radius:8px;border:1px solid var(--line);background:var(--pitch2);color:var(--chalk-dim);font-size:.85rem;font-weight:600;cursor:pointer;text-transform:uppercase;letter-spacing:.5px;}
+.tab.active{background:var(--run);color:#fff;border-color:var(--run);}
+main{max-width:640px;margin:0 auto;padding:16px 18px 40px;}
+.day-title{font-size:1.15rem;margin:8px 0 14px;color:var(--chalk-dim);}
+.card{background:var(--pitch2);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-bottom:12px;}
+.card.run{border-left:4px solid var(--run);}
+.card.gym{border-left:4px solid var(--gym);}
+.card.foot{border-left:4px solid var(--foot);}
+.card.school{border-left:4px solid #46586e;opacity:.85;}
+.card-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px;}
+.card-head .time{font-family:'Oswald',sans-serif;font-weight:600;color:var(--chalk);}
+.card-head .label{font-size:.7rem;text-transform:uppercase;letter-spacing:1px;color:var(--chalk-dim);}
+.card p{margin:8px 0 0;font-size:.88rem;line-height:1.5;color:var(--chalk-dim);}
+.chk{display:flex;align-items:center;gap:8px;margin-top:10px;font-size:.82rem;cursor:pointer;user-select:none;}
+.chk input{width:17px;height:17px;accent-color:var(--done);}
+.done .card-head .time{text-decoration:line-through;color:var(--chalk-dim);}
+.card ul{margin:8px 0 0;padding-left:18px;font-size:.82rem;color:var(--chalk-dim);}
+.card li{margin-bottom:3px;}
+footer{max-width:640px;margin:0 auto;padding:0 18px 30px;font-size:.78rem;color:var(--chalk-dim);line-height:1.5;}
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){--pitch:#f6f4ee;--pitch2:#ffffff;--chalk:#16241b;--chalk-dim:#5b6a5f;--line:#e1ddd0;}
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>Objectif Ajax</h1>
+  <p>Programme quotidien — course du matin, école, renfo, jusqu'à l'essai</p>
+</header>
+<div class="tabs" id="tabs"></div>
+<main id="main"></main>
+<footer>Écoutez votre corps : en cas de douleur inhabituelle, allégez la séance. Sommeil (8-9h) et repas après le sport comptent autant que les séances.</footer>
+<script>
+const DAYS = [
+{k:"lun",n:"Lundi",school:{end:"15h10",items:["8h00 Méthodologie","9h00 Hist-Géo","10h10 SPE SPC (labo)"]},
+ run:{t:"6h00 – 6h40",d:"Footing léger 25 min, allure conversation + 6 lignes droites de 60 m en fin de course."},
+ foot:{t:"15h30 – 16h15",label:"Technique de balle",ex:["Jonglages pied fort/faible — 3 × 2 min","Conduite de balle en slalom (plots/bouteilles) — 6 allers-retours","Contrôle orienté + accélération sur 10 m — 8 reps"]},
+ gym:{t:"16h20 – 17h00",label:"Bas du corps / explosivité",ex:["Squats sautés — 4 × 10","Fentes sautées alternées — 4 × 12 (6/jambe)","Squats bulgares (pied arrière surélevé) — 3 × 8/jambe","Montées sur step/banc — 4 × 10/jambe","Gainage planche — 3 × 40 s","Gainage latéral — 3 × 30 s/côté"]}},
+{k:"mar",n:"Mardi",school:{end:"17h05",items:["9h00 Anglais LV1","10h10 Français","13h00 SPE SES","14h00 DNL HG","15h10 SPE Maths"]},
+ run:{t:"6h00 – 6h35",d:"Fractionné court : 6 × 200 m rapide / 200 m marche-trot de récup."},
+ foot:{t:"17h20 – 18h10",label:"Passes et jeu à deux",ex:["Passes courtes contre un mur, 1 touche — 10 min","Passes longues à deux (30-40 m) — 15 reps","Jeu à deux en espace réduit (touches limitées, garder le ballon) — 10 min","Contrôle + demi-tour rapide — 8 reps"]},
+ gym:null},
+{k:"mer",n:"Mercredi",school:{end:"17h05",items:["8h00 Français","10h10 Approf. Cult. & Ling.","13h00 Hist-Géo","14h00 Anglais LV1","15h10 SPE SPC"]},
+ run:{t:"6h00 – 6h25",d:"Footing très léger 20 min, journée d'école longue : on garde de l'énergie."},
+ foot:{t:"17h20 – 18h00",label:"Technique + jeu à deux",ex:["Jonglages libres — 5 min","Petits gestes techniques (roulettes, crochets) — 10 min","Jeu à deux en mouvement (passe-et-va) — 10 min"]},
+ gym:null},
+{k:"jeu",n:"Jeudi",school:{end:"17h05",items:["8h00 Français","9h00 Anglais LV1","10h10 SPE SES","14h00 Hist-Géo","15h10 SPE Maths"]},
+ run:{t:"6h00 – 6h35",d:"Fractionné puissance : 8 × 100 m sprint progressif / retour marché."},
+ foot:{t:"17h20 – 17h50",label:"Finitions (frappe)",ex:["Frappes au but pied fort (petit but/cible) — 15 frappes","Frappes pied faible — 10 frappes","Enchaînement contrôle-frappe — 8 reps"]},
+ gym:{t:"17h55 – 18h35",label:"Pliométrie / vitesse",ex:["Skipping genoux hauts — 4 × 20 s","Sauts latéraux (haies imaginaires) — 4 × 10","Squats bulgares explosifs — 3 × 8/jambe","Accélérations 10 m départ arrêté — 6 reps","Planche avec levée de jambe — 3 × 10/jambe"]}},
+{k:"ven",n:"Vendredi",school:{end:"17h05",items:["8h00 Connaiss. du Monde","9h00 SPE SES","13h00 EPS (Sport centrum De Pijp)","15h10 LV2"]},
+ run:{t:"6h00 – 6h25",d:"Footing léger 20 min + gammes athlétiques (talons-fesses, montées de genoux)."},
+ foot:{t:"17h20 – 18h10",label:"1 contre 1, jeu à deux et passes",ex:["Duels 1v1 en espace réduit avec l'ami — 8 × 20 s","Jeu à deux en possession libre — 10 min","Passes variées (courtes/longues) — 10 min"]},
+ gym:null},
+{k:"sam",n:"Samedi",school:null,
+ run:{t:"9h00 – 9h50",d:"Sortie longue 40-45 min + 10 min de technique ballon (jonglage, conduite de balle, passes)."},
+ foot:{t:"11h00 – 12h00",label:"Séance terrain complète",ex:["Jonglages libres — 5 min","Conduite en slalom — 6 allers-retours","Passes à deux — 10 min","Duels 1v1 — 8 reps","Frappes au but pied fort/faible — 15 + 10 frappes","Petit match ou jeu à deux (possession libre) — 15-20 min"]},
+ gym:{t:"16h00 – 16h40",label:"Séance complète",ex:["Squats sautés — 4 × 10","Pompes — 4 × 12","Fentes sautées — 3 × 12","Sprints 20 m — 8 reps","Planche — 3 × 45 s"]}},
+{k:"dim",n:"Dimanche",school:null,
+ run:{t:"10h00 – 10h20",d:"Récupération active : footing très léger ou repos complet si fatigue, au choix selon la semaine."},
+ foot:{t:"10h30 – 11h10",label:"Technique et jeu à deux (léger)",ex:["Jonglages libres — 5-10 min","Passes tranquilles à deux (jeu à deux) — 15 min","Petits gestes techniques sans intensité — 5 min"]},
+ gym:null}
+];
+const tabs=document.getElementById('tabs'), main=document.getElementById('main');
+let active=localStorage.getItem('ajax_active')||'lun';
+function key(dayK,part){return 'ajax_'+dayK+'_'+part;}
+function render(){
+  tabs.innerHTML='';
+  DAYS.forEach(d=>{
+    const b=document.createElement('button');
+    b.className='tab'+(d.k===active?' active':'');
+    b.textContent=d.n.slice(0,3);
+    b.onclick=()=>{active=d.k;localStorage.setItem('ajax_active',active);render();};
+    tabs.appendChild(b);
+  });
+  const d=DAYS.find(x=>x.k===active);
+  let h=`<div class="day-title">${d.n}</div>`;
+  h+=cardRun(d);
+  if(d.school){
+    h+=`<div class="card school"><div class="card-head"><span class="time">École</span><span class="label">jusqu'à ${d.school.end}</span></div><ul>${d.school.items.map(i=>`<li>${i}</li>`).join('')}</ul></div>`;
+  }
+  h+=cardFoot(d);
+  if(d.gym) h+=cardGym(d);
+  main.innerHTML=h;
+  attach(d);
+}
+function cardRun(d){
+  return `<div class="card run" id="run-${d.k}"><div class="card-head"><span class="time">${d.run.t}</span><span class="label">Course</span></div><p>${d.run.d}</p><label class="chk"><input type="checkbox" id="chk-run-${d.k}"> Séance faite</label></div>`;
+}
+function cardFoot(d){
+  return `<div class="card foot" id="foot-${d.k}"><div class="card-head"><span class="time">${d.foot.t}</span><span class="label">${d.foot.label}</span></div><ul>${d.foot.ex.map(x=>`<li>${x}</li>`).join('')}</ul><label class="chk"><input type="checkbox" id="chk-foot-${d.k}"> Séance faite</label></div>`;
+}
+function cardGym(d){
+  return `<div class="card gym" id="gym-${d.k}"><div class="card-head"><span class="time">${d.gym.t}</span><span class="label">${d.gym.label}</span></div><ul>${d.gym.ex.map(x=>`<li>${x}</li>`).join('')}</ul><label class="chk"><input type="checkbox" id="chk-gym-${d.k}"> Séance faite</label></div>`;
+}
+function attach(d){
+  ['run','foot','gym'].forEach(part=>{
+    const box=document.getElementById('chk-'+part+'-'+d.k);
+    const card=document.getElementById(part+'-'+d.k);
+    if(!box) return;
+    try{ box.checked = localStorage.getItem(key(d.k,part))==='1'; }catch(e){}
+    card.classList.toggle('done', box.checked);
+    box.onchange=()=>{
+      try{ localStorage.setItem(key(d.k,part), box.checked?'1':'0'); }catch(e){}
+      card.classList.toggle('done', box.checked);
+    };
+  });
+}
+render();
+</script>
+</body>
+</html>
